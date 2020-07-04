@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   
-    <title>microgen-1 // simple RISC-V CPU on an FPGA :: Will Blayney — Bloggy Blog</title>
+    <title>microgen-1 part 0// simple RISC-V CPU on an FPGA :: Will Blayney — Bloggy Blog</title>
   
   <meta http-equiv="content-type" content="text/html; charset=utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -38,10 +38,10 @@
 
 <meta property="og:locale" content="en" />
 <meta property="og:type" content="article" />
-<meta property="og:title" content="microgen-1 // simple RISC-V CPU on an FPGA :: Will Blayney">
-<meta property="og:description" content="A RISC-V CPU on an FPGA dev log - first time using Xilinx FPGA / Verilator, and first time building softcore CPU!" />
+<meta property="og:title" content="microgen-1 part 0// simple RISC-V CPU on an FPGA :: Will Blayney">
+<meta property="og:description" content="A RISC-V CPU on an FPGA dev log - first time using Xilinx FPGA / Verilator, and first time building softcore CPU! Part 0, looking at planning the project." />
 <meta property="og:url" content="/posts/first/" />
-<meta property="og:site_name" content="microgen-1 // simple RISC-V CPU on an FPGA" />
+<meta property="og:site_name" content="microgen-1 part 0// simple RISC-V CPU on an FPGA" />
 
   <meta property="og:image" content="/">
 
@@ -121,7 +121,7 @@
     
 <div class="post">
   <h1 class="post-title">
-    <a href="/posts/first/">microgen-1 // simple RISC-V CPU on an FPGA</a></h1>
+    <a href="/posts/first/">microgen-1 part 0// simple RISC-V CPU on an FPGA</a></h1>
   <div class="post-meta">
     
       <span class="post-date">
@@ -144,6 +144,8 @@
     
     #<a href="/tags/risc-v/">RISC-V</a>&nbsp;
     
+    #<a href="/tags/microgen-1/">microgen-1</a>&nbsp;
+    
   </span>
   
 
@@ -156,6 +158,7 @@
 <h1 id="planning-and-figuring-out-first-steps">Planning and Figuring out First Steps<a href="#planning-and-figuring-out-first-steps" class="hanchor" ariaLabel="Anchor">&#8983;</a> </h1>
 <p>I&rsquo;m going to deploy onto a CMOD A7, which is effectively a breadboardable development board built around a Xilinx Artix 7 with USB JTAG + UART, some SRAM, Quad-SPI flash allowing me to save the configuration on the board instead of bitstreaming every time the device powercycles, and some IO like buttons and LEDs which make testing easier.</p>
 <p>I&rsquo;ll be porting a small number of instructions from RISC-V over to this CPU, using a combination of microcode and hardwired implementation - a lot of FPGA RISC-V microarchitectures that seem or claim to be hardwired use some amount of (what I would call) microcode to run routines / control flow having &ldquo;interpreted&rdquo; an instruction or set of instructions. Keeping a small number of hardware operations (and modules) means verification and development is easier, so any instructions that can be simplified or implimented as basic routines made of other instructions in the set (using what I would call a microengine by the definition in <a href="https://sites.cs.ucsb.edu/~franklin/154/micmachandout.pdf">this paper</a>) are a bonus.</p>
+<p>Because of the involvement of the microengine, the parts of this CPU that are designed by me will come from the reasoning explained in Structured Computer Organisation, by Andrew Tanenbaum, relevant due to the detailed exploration of multilevel machines.</p>
 <h4 id="development-environment---verilator-and-systemverilog-style">Development Environment - Verilator and SystemVerilog Style<a href="#development-environment---verilator-and-systemverilog-style" class="hanchor" ariaLabel="Anchor">&#8983;</a> </h4>
 <p>I&rsquo;m following <a href="https://www.youtube.com/channel/UCBcljXmuXPok9kT_VGA3adg">Robert Baruch</a>&rsquo;s style of CPU-on-FPGA development, because it&rsquo;s the most approachable (and well documented) workflow for an FPGA noob like me. My interpretation of this workflow is as follows:</p>
 <ol>
@@ -168,6 +171,8 @@
 <h4 id="microcoding-for-risc-v">Microcoding for RISC-V<a href="#microcoding-for-risc-v" class="hanchor" ariaLabel="Anchor">&#8983;</a> </h4>
 <p>Because I&rsquo;m working from an existing, carefully defined instruction set, I can look at existing microcode solutions for RISC-V and port it over to the FPGA, with a couple of changes to things like stack structure and pipelining to take advantage of the fact that I&rsquo;m using an FPGA (with RAM blocks inside). RISC-V&rsquo;s specification deliberately avoids &ldquo;over-architecting&rdquo;, keeping the spec within the bounds of the instruction set and leaving target architecture and microarchitecture decisions to the person implementing them. It&rsquo;s designed to be as universal as possible, and avoids catering to one target architecture, making it ideal for FPGA implementation.</p>
 <p>RISC-V has some key advantages when it comes to easy microcode development - things like variable instruction lengths mean that I can avoid wasting lots of space in the stack from having to zero extend either instructions or addresses. It also has a modular instruction set - there are 4 base modules, RV32I (base integer, 47 instructions), RV32E (a reduced version of RV32I for embedded systems, with reduced numbers of counters and integer registers) , RV64I (an expansion of RV32I with 64 bit integer registers and user address space) and RV128I (like RV64I but with a 128 bit flat address space, which is extremely large!) although RV32I alone is enough to get a working CPU and emulate most of the extension modules. These are all layed out in detail in the specification <a href="https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf">here</a> although this may not be the most up to date spec for long.</p>
+<h4 id="multilayer-machines-and-the-difference-between-isa-and-microcode">Multilayer Machines and the Difference Between ISA and Microcode<a href="#multilayer-machines-and-the-difference-between-isa-and-microcode" class="hanchor" ariaLabel="Anchor">&#8983;</a> </h4>
+<p>The RISC-V specification does go into some detail on the memory model, and some hardware components of the CPU. It defines the behaviour of the ALU, internal registers and stack frames, which means that some of the behaviour of lower levels (Tanenbaum&rsquo;s levels 1 and 0 in 1.1.2 Contemporary Multilevel Machines) has already been defined by the ISA. In this project, I&rsquo;m treating my SystemVerilog code (the modules themselves) to be the microcode and direct implementation (level 1), which facilitiates level 2, conforming to the level 2 standard layed out in the specification, and conforming to the memory models and register structure (level 1 in the spec) as much as need be to get the level 2 functionality working, even if this means leaving out bits or changing stuff.</p>
 
       </div></div>
 
