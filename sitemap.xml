@@ -4,41 +4,46 @@
   
   <url>
     <loc>/tags/cpu/</loc>
-    <lastmod>2020-07-02T00:00:00+00:00</lastmod>
+    <lastmod>2020-07-04T00:00:00+00:00</lastmod>
   </url>
   
   <url>
     <loc>/tags/fpga/</loc>
-    <lastmod>2020-07-02T00:00:00+00:00</lastmod>
+    <lastmod>2020-07-04T00:00:00+00:00</lastmod>
   </url>
   
   <url>
     <loc>/tags/microgen-1/</loc>
-    <lastmod>2020-07-02T00:00:00+00:00</lastmod>
+    <lastmod>2020-07-04T00:00:00+00:00</lastmod>
   </url>
   
   <url>
-    <loc>/posts/first/</loc>
-    <lastmod>2020-07-02T00:00:00+00:00</lastmod>
+    <loc>/posts/microgen-1-1/</loc>
+    <lastmod>2020-07-04T00:00:00+00:00</lastmod>
   </url>
   
   <url>
     <loc>/posts/</loc>
-    <lastmod>2020-07-02T00:00:00+00:00</lastmod>
+    <lastmod>2020-07-04T00:00:00+00:00</lastmod>
   </url>
   
   <url>
     <loc>/tags/risc-v/</loc>
-    <lastmod>2020-07-02T00:00:00+00:00</lastmod>
+    <lastmod>2020-07-04T00:00:00+00:00</lastmod>
   </url>
   
   <url>
     <loc>/tags/</loc>
-    <lastmod>2020-07-02T00:00:00+00:00</lastmod>
+    <lastmod>2020-07-04T00:00:00+00:00</lastmod>
   </url>
   
   <url>
     <loc>/</loc>
+    <lastmod>2020-07-04T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/posts/first/</loc>
     <lastmod>2020-07-02T00:00:00+00:00</lastmod>
   </url>
   

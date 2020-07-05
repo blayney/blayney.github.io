@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+    <title>microgen-1 part 1 // microinstruction set :: Will Blayney — Bloggy Blog</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="I&amp;rsquo;m working on a device that needs to manage a few RAM chips and run some basic programs, with the capabilities being upgraded over time after the board has been assembled. This calls for deployment on an FPGA, but setting up a simple softcore CPU would mean I don&amp;rsquo;t have to create an entirely new ISA or do much hard work thinking up a way to build an FPGA MMU, I just have to build the microarchitecture, which is microgen-1." />
+<meta name="keywords" content=", " />
+<meta name="robots" content="noodp" />
+<link rel="canonical" href="/posts/microgen-1-1/" />
+
+
+
+
+<link rel="stylesheet" href="/assets/style.css">
+
+  <link rel="stylesheet" href="/assets/green.css">
+
+
+
+
+
+
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="/img/apple-touch-icon-144-precomposed.png">
+
+  <link rel="shortcut icon" href="/img/favicon/green.png">
+
+
+
+<meta name="twitter:card" content="summary" />
+
+  <meta name="twitter:site" content="" />
+
+<meta name="twitter:creator" content="" />
+
+
+<meta property="og:locale" content="en" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="microgen-1 part 1 // microinstruction set :: Will Blayney">
+<meta property="og:description" content="A RISC-V CPU on an FPGA dev log - first time using Xilinx FPGA / Verilator, and first time building softcore CPU! Part 1, looking at building the microarchitecture commands that I can use as building blocks for the instruction set architecture." />
+<meta property="og:url" content="/posts/microgen-1-1/" />
+<meta property="og:site_name" content="microgen-1 part 1 // microinstruction set" />
+
+  <meta property="og:image" content="/">
+
+<meta property="og:image:width" content="2048">
+<meta property="og:image:height" content="1024">
+
+
+  <meta property="article:published_time" content="2020-07-04 00:00:00 &#43;0000 UTC" />
+
+
+
+
+
+
+
+
+
+
+
+
+</head>
+<body class="">
+
+
+<div class="container center headings--one-size">
+
+  <header class="header">
+  <div class="header__inner">
+    <div class="header__logo">
+      <a href="/">
+  <div class="logo">
+    Will Blayney
+  </div>
+</a>
+
+    </div>
+    <div class="menu-trigger">menu</div>
+  </div>
+  
+    <nav class="menu">
+  <ul class="menu__inner menu__inner--desktop">
+    
+      
+        
+          <li><a href="/about">About</a></li>
+        
+      
+        
+          <li><a href="https://github.com/blayney">Github</a></li>
+        
+      
+      
+    
+
+    
+  </ul>
+
+  <ul class="menu__inner menu__inner--mobile">
+    
+      
+        <li><a href="/about">About</a></li>
+      
+    
+      
+        <li><a href="https://github.com/blayney">Github</a></li>
+      
+    
+    
+  </ul>
+</nav>
+
+  
+</header>
+
+
+  <div class="content">
+    
+<div class="post">
+  <h1 class="post-title">
+    <a href="/posts/microgen-1-1/">microgen-1 part 1 // microinstruction set</a></h1>
+  <div class="post-meta">
+    
+      <span class="post-date">
+        2020-07-04 
+      </span>
+    
+    
+    <span class="post-author">::
+      Will Blayney
+    </span>
+    
+  </div>
+
+  
+  <span class="post-tags">
+    
+    #<a href="/tags/fpga/">FPGA</a>&nbsp;
+    
+    #<a href="/tags/cpu/">CPU</a>&nbsp;
+    
+    #<a href="/tags/risc-v/">RISC-V</a>&nbsp;
+    
+    #<a href="/tags/microgen-1/">microgen-1</a>&nbsp;
+    
+  </span>
+  
+
+  
+
+  
+
+  <div class="post-content"><div>
+        <p><em>I&rsquo;m working on a device that needs to manage a few RAM chips and run some basic programs, with the capabilities being upgraded over time after the board has been assembled. This calls for deployment on an FPGA, but setting up a simple softcore CPU would mean I don&rsquo;t have to create an entirely new ISA or do much hard work thinking up a way to build an FPGA MMU, I just have to build the microarchitecture, which is microgen-1.</em></p>
+<p>We need some building block microinstructions to work from, to start putting together some microprograms for some opcodes. These microinstructions work inside the microengine, which has its own microinstruction pointer, and control store where these instructions are held. It has the ability to iterate through these microprograms by incrementing the microinstruction pointer, but also needs to be able to jump to specific points in the control store to execute microroutines. It has a stack on which it can call these microprograms, and pop them when they&rsquo;re done, and some basic ALU operations like increment and or. All the &ldquo;ALU&rdquo; instructions from the instruction set are actually sent through this microALU, or uALU.</p>
+<p>The basic microinstruction set looks like this:</p>
+<table>
+<thead>
+<tr>
+<th>Opcode</th>
+<th>Description</th>
+<th>Logic</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NOP</td>
+<td>No op</td>
+<td>None</td>
+</tr>
+<tr>
+<td>INC</td>
+<td>Increments the current address</td>
+<td>Sets the next address to the current address + 1</td>
+</tr>
+<tr>
+<td>JMP</td>
+<td>Loads load address into current address</td>
+<td>sets next address to the load address, basically  calling without creating a stack frame</td>
+</tr>
+<tr>
+<td>CALL</td>
+<td>Creates stack frame</td>
+<td>sets next stack frame&rsquo;s address at the stack pointer  to current address + 1, sets next stack pointer to  stack pointer + 1, and sets next address to the load  address effectively jumping into the routine</td>
+</tr>
+<tr>
+<td>RET</td>
+<td>Drops stack frame and returns to return address</td>
+<td>sets the next address to the return address by looking  at the value stored in the call stack at location stack  pointer - 1, and then sets the next stack pointer  to the stack pointer - 1.</td>
+</tr>
+<tr>
+<td>JNZ</td>
+<td>Jumps to load address if value at IP is not zero, if  so increments</td>
+<td>sets the next address to load address if the zero flag is  low, increments if the zero flag is high.</td>
+</tr>
+<tr>
+<td>RST</td>
+<td>Resets current address to 0, ignores load address</td>
+<td>sets next address to 0</td>
+</tr>
+</tbody>
+</table>
+<p>A clock is also defined - when a posedge is detected, the following happens:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-SystemVerilog" data-lang="SystemVerilog"><span style="color:#66d9ef">always_ff</span> @(<span style="color:#66d9ef">posedge</span> clock) <span style="color:#66d9ef">begin</span>
+	current_addr <span style="color:#f92672">&lt;=</span> next_addr;
+	current_stack_ptr <span style="color:#f92672">&lt;=</span> next_stack_ptr;
+	stack <span style="color:#f92672">&lt;=</span> next_stack;
+<span style="color:#66d9ef">end</span> <span style="color:#75715e">//always_ff
+</span></code></pre></div><p>Which moves all the values onto their &ldquo;next&rdquo; iterated versions at the end of that clock cycle.</p>
+
+      </div></div>
+
+  
+  
+<div class="pagination">
+    <div class="pagination__title">
+        <span class="pagination__title-h">Read other posts</span>
+        <hr />
+    </div>
+    <div class="pagination__buttons">
+        
+        
+        <span class="button next">
+            <a href="/posts/first/">
+                <span class="button__text">microgen-1 part 0 // simple RISC-V CPU on an FPGA</span>
+                <span class="button__icon">→</span>
+            </a>
+        </span>
+        
+    </div>
+</div>
+
+  
+
+  
+
+</div>
+
+  </div>
+
+  
+    <footer class="footer">
+
+</footer>
+
+<script src="/assets/main.js"></script>
+<script src="/assets/prism.js"></script>
+
+
+
+
+
+  
+</div>
+
+</body>
+</html>

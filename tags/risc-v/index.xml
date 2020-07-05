@@ -6,13 +6,22 @@
     <description>Recent content in RISC-V on Will Blayney</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 02 Jul 2020 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 04 Jul 2020 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/risc-v/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
-      <title>microgen-1 part 0// simple RISC-V CPU on an FPGA</title>
+      <title>microgen-1 part 1 // microinstruction set</title>
+      <link>/posts/microgen-1-1/</link>
+      <pubDate>Sat, 04 Jul 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/posts/microgen-1-1/</guid>
+      <description>I&amp;rsquo;m working on a device that needs to manage a few RAM chips and run some basic programs, with the capabilities being upgraded over time after the board has been assembled. This calls for deployment on an FPGA, but setting up a simple softcore CPU would mean I don&amp;rsquo;t have to create an entirely new ISA or do much hard work thinking up a way to build an FPGA MMU, I just have to build the microarchitecture, which is microgen-1.</description>
+    </item>
+    
+    <item>
+      <title>microgen-1 part 0 // simple RISC-V CPU on an FPGA</title>
       <link>/posts/first/</link>
       <pubDate>Thu, 02 Jul 2020 00:00:00 +0000</pubDate>
       
